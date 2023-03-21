@@ -8,7 +8,7 @@ WORKDIR /root
 
 # Update packages and install necessary tools : install openssh-server, openjdk and wget, vim, python 
 RUN apt-get update && apt-get -y upgrade && \
-    apt-get -y install  openssh-server  wget vim openjdk-8-jdk 
+    apt-get -y install  openssh-server  pdsh wget vim openjdk-8-jdk 
     #apt-get install -y python3   python3-pip && \
     #apt install -y python3.10-venv && \
     #python3 -m venv myenv && \
@@ -21,16 +21,25 @@ RUN apt-get update && apt-get -y upgrade && \
 
 
 # install hadoop 3.3.4
-RUN wget https://dlcdn.apache.org/hadoop/common/hadoop-3.3.4/hadoop-3.3.4.tar.gz && \
-    tar -xzf hadoop-3.3.4.tar.gz && \
-    mv hadoop-3.3.4 /usr/local/hadoop && \
-    rm hadoop-3.3.4.tar.gz
+#RUN wget https://dlcdn.apache.org/hadoop/common/hadoop-3.3.4/hadoop-3.3.4.tar.gz && \
+   # tar -xzf hadoop-3.3.4.tar.gz && \
+   # mv hadoop-3.3.4 /usr/local/hadoop && \
+   # rm hadoop-3.3.4.tar.gz
+
+RUN wget https://github.com/kiwenlau/compile-hadoop/releases/download/2.7.2/hadoop-2.7.2.tar.gz && \
+    tar -xzvf hadoop-2.7.2.tar.gz && \
+    mv hadoop-2.7.2 /usr/local/hadoop && \
+    rm hadoop-2.7.2.tar.gz
 
 #RUN groupadd hdfs && \
    # useradd -g hdfs hdfs
 
 # environment variables for hadoop
+ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 
+#ENV PYSPARK_PYTHON=/usr/bin/python3
 ENV HADOOP_HOME=/usr/local/hadoop 
+#maybe here, should add deltalake as well, plus the delta_home maybe 
+ENV PATH=$PATH:/usr/local/hadoop/bin:/usr/local/hadoop/sbin:/usr/local/spark/bin
 ENV HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
 ENV LD_LIBRARY_PATH=/usr/local/hadoop/lib/native:$LD_LIBRARY_PATH 
 
@@ -49,21 +58,18 @@ ENV SPARK_HOME=/usr/local/spark
 # Install Delta Lake 2.2.0
 RUN wget -O delta-core_2.12-2.2.0.jar https://repo1.maven.org/maven2/io/delta/delta-core_2.12/2.2.0/delta-core_2.12-2.2.0.jar && \
     mv delta-core_2.12-2.2.0.jar $SPARK_HOME/jars/ 
-    # pyspark --packages io.delta:delta-core_2.12:2.2.0 --conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog"
+    
+RUN pyspark --packages io.delta:delta-core_2.12:2.2.0 
+#--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" 
+#--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog"
 
-#install pyspark
-#RUN pip install pyspark
 
 # Add Delta Lake configuration to Spark
 RUN echo "spark.sql.extensions io.delta.sql.DeltaSparkSessionExtension" >> $SPARK_HOME/conf/spark-defaults.conf && \
     echo "spark.sql.catalog.spark_catalog org.apache.spark.sql.delta.catalog.DeltaCatalog" >> $SPARK_HOME/conf/spark-defaults.conf 
 
-# set environment variables
-ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 
-#ENV PYSPARK_PYTHON=/usr/bin/python3
 
-#maybe here, should add deltalake as well, plus the delta_home maybe 
-ENV PATH=$PATH:/usr/local/hadoop/bin:/usr/local/hadoop/sbin:/usr/local/spark/bin
+
 
 
 # ssh without key
@@ -89,16 +95,18 @@ RUN mv /tmp/ssh_config ~/.ssh/config && \
     mv /tmp/yarn-site.xml $HADOOP_HOME/etc/hadoop/yarn-site.xml && \
     mv /tmp/slaves $HADOOP_HOME/etc/hadoop/slaves && \
     mv /tmp/start-hadoop.sh ~/start-hadoop.sh && \
+    mv /tmp/run-wordcount.sh ~/run-wordcount.sh && \
     mv /tmp/spark-defaults.conf $SPARK_HOME/conf/spark-defaults.conf 
 
 #Maybe here i should add the start container.sh and resize.sh 
 
 RUN chmod +x ~/start-hadoop.sh && \
-    chmod +x start-container.sh && \
+    #chmod +x ~/start-container.sh && \
+    chmod +x ~/run-wordcount.sh && \
     chmod +x $HADOOP_HOME/sbin/start-dfs.sh && \
     chmod +x $HADOOP_HOME/sbin/start-yarn.sh 
 
-# format namenode #what is this ??
+# format namenode 
 RUN /usr/local/hadoop/bin/hdfs namenode -format
 
 CMD [ "sh", "-c", "service ssh start; bash"]

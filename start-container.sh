@@ -1,4 +1,5 @@
 #!/bin/bash
+sudo docker network create --driver=bridge myservice
 
 # the default node number is 3
 N=${1:-3}
@@ -8,7 +9,7 @@ N=${1:-3}
 sudo docker rm -f hadoop-master &> /dev/null
 echo "start hadoop-master container..."
 sudo docker run -itd \
-                --net=hadoop \
+                --net=myservice \
                 -p 50070:50070 \
                 -p 8088:8088 \
                 -p 7077:7077 \
