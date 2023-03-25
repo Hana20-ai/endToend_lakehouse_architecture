@@ -56,17 +56,17 @@ RUN wget https://dlcdn.apache.org/spark/spark-3.3.2/spark-3.3.2-bin-hadoop3.tgz 
 ENV SPARK_HOME=/usr/local/spark
 
 # Install Delta Lake 2.2.0
-RUN wget -O delta-core_2.12-2.2.0.jar https://repo1.maven.org/maven2/io/delta/delta-core_2.12/2.2.0/delta-core_2.12-2.2.0.jar && \
-    mv delta-core_2.12-2.2.0.jar $SPARK_HOME/jars/ 
+#RUN wget -O delta-core_2.12-2.2.0.jar https://repo1.maven.org/maven2/io/delta/delta-core_2.12/2.2.0/delta-core_2.12-2.2.0.jar && \
+   # mv delta-core_2.12-2.2.0.jar $SPARK_HOME/jars/ 
     
-RUN pyspark --packages io.delta:delta-core_2.12:2.2.0 
+#RUN pyspark --packages io.delta:delta-core_2.12:2.2.0 
 #--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" 
 #--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog"
 
 
 # Add Delta Lake configuration to Spark
-RUN echo "spark.sql.extensions io.delta.sql.DeltaSparkSessionExtension" >> $SPARK_HOME/conf/spark-defaults.conf && \
-    echo "spark.sql.catalog.spark_catalog org.apache.spark.sql.delta.catalog.DeltaCatalog" >> $SPARK_HOME/conf/spark-defaults.conf 
+#RUN echo "spark.sql.extensions io.delta.sql.DeltaSparkSessionExtension" >> $SPARK_HOME/conf/spark-defaults.conf && \
+    #echo "spark.sql.catalog.spark_catalog org.apache.spark.sql.delta.catalog.DeltaCatalog" >> $SPARK_HOME/conf/spark-defaults.conf 
 
 
 
