@@ -8,7 +8,7 @@ WORKDIR /root
 
 # Update packages and install necessary tools : install openssh-server, openjdk and wget, vim, python 
 RUN apt-get update && apt-get -y upgrade && \
-    apt-get -y install  openssh-server  pdsh wget vim openjdk-8-jdk 
+    apt-get -y install  openssh-server  wget vim openjdk-8-jdk 
     #apt-get install -y python3   python3-pip && \
     #apt install -y python3.10-venv && \
     #python3 -m venv myenv && \
@@ -21,15 +21,15 @@ RUN apt-get update && apt-get -y upgrade && \
 
 
 # install hadoop 3.3.4
-#RUN wget https://dlcdn.apache.org/hadoop/common/hadoop-3.3.4/hadoop-3.3.4.tar.gz && \
-   # tar -xzf hadoop-3.3.4.tar.gz && \
-   # mv hadoop-3.3.4 /usr/local/hadoop && \
-   # rm hadoop-3.3.4.tar.gz
+RUN wget https://dlcdn.apache.org/hadoop/common/hadoop-3.3.4/hadoop-3.3.4.tar.gz && \
+    tar -xzf hadoop-3.3.4.tar.gz && \
+    mv hadoop-3.3.4 /usr/local/hadoop && \
+    rm hadoop-3.3.4.tar.gz
 
-RUN wget https://github.com/kiwenlau/compile-hadoop/releases/download/2.7.2/hadoop-2.7.2.tar.gz && \
-    tar -xzvf hadoop-2.7.2.tar.gz && \
-    mv hadoop-2.7.2 /usr/local/hadoop && \
-    rm hadoop-2.7.2.tar.gz
+#RUN wget https://github.com/kiwenlau/compile-hadoop/releases/download/2.7.2/hadoop-2.7.2.tar.gz && \
+    #tar -xzvf hadoop-2.7.2.tar.gz && \
+    #mv hadoop-2.7.2 /usr/local/hadoop && \
+    #rm hadoop-2.7.2.tar.gz
 
 #RUN groupadd hdfs && \
    # useradd -g hdfs hdfs
@@ -93,7 +93,7 @@ RUN mv /tmp/ssh_config ~/.ssh/config && \
     mv /tmp/core-site.xml $HADOOP_HOME/etc/hadoop/core-site.xml && \
     mv /tmp/mapred-site.xml $HADOOP_HOME/etc/hadoop/mapred-site.xml && \
     mv /tmp/yarn-site.xml $HADOOP_HOME/etc/hadoop/yarn-site.xml && \
-    mv /tmp/slaves $HADOOP_HOME/etc/hadoop/slaves && \
+    mv /tmp/workers $HADOOP_HOME/etc/hadoop/workers && \
     mv /tmp/start-hadoop.sh ~/start-hadoop.sh && \
     mv /tmp/run-wordcount.sh ~/run-wordcount.sh && \
     mv /tmp/spark-defaults.conf $SPARK_HOME/conf/spark-defaults.conf 
