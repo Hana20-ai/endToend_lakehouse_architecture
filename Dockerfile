@@ -9,13 +9,12 @@ WORKDIR /root
 # Update packages and install necessary tools : install openssh-server, openjdk and wget, vim, python 
 RUN apt-get update && apt-get -y upgrade && \
     apt-get -y install  openssh-server  wget vim openjdk-8-jdk 
-    #apt-get install -y python3   python3-pip && \
-    #apt install -y python3.10-venv && \
-    #python3 -m venv myenv && \
-    #source myenv/bin/activate && \
-    #pip install -y --upgrade urllib3 chardet 
+   
     
-
+ENV SPARK_VERSION 3.3.2
+ENV HADOOP_VERSION 3
+ENV DELTA_VERSION 2.2.0
+ENV SCALA_VERSION 2.12
    
 
 
@@ -26,13 +25,7 @@ RUN wget https://dlcdn.apache.org/hadoop/common/hadoop-3.3.4/hadoop-3.3.4.tar.gz
     mv hadoop-3.3.4 /usr/local/hadoop && \
     rm hadoop-3.3.4.tar.gz
 
-#RUN wget https://github.com/kiwenlau/compile-hadoop/releases/download/2.7.2/hadoop-2.7.2.tar.gz && \
-    #tar -xzvf hadoop-2.7.2.tar.gz && \
-    #mv hadoop-2.7.2 /usr/local/hadoop && \
-    #rm hadoop-2.7.2.tar.gz
 
-#RUN groupadd hdfs && \
-   # useradd -g hdfs hdfs
 
 # environment variables for hadoop
 ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 
@@ -51,22 +44,23 @@ RUN wget https://dlcdn.apache.org/spark/spark-3.3.2/spark-3.3.2-bin-hadoop3.tgz 
     rm spark-3.3.2-bin-hadoop3.tgz
 
 
-
 # environment variables for sprak 
 ENV SPARK_HOME=/usr/local/spark
 
+
+
+# DeltaLake
+#RUN wget https://repo1.maven.org/maven2/io/delta/delta-core_2.12/2.2.0/delta-core_2.12-2.2.0.jar -P $SPARK_HOME/jars/ && \
+   # wget https://repo1.maven.org/maven2/io/delta/delta-storage/$DELTA_VERSION/delta-storage-$DELTA_VERSION.jar -P $SPARK_HOME/jars/
+
 # Install Delta Lake 2.2.0
-#RUN wget -O delta-core_2.12-2.2.0.jar https://repo1.maven.org/maven2/io/delta/delta-core_2.12/2.2.0/delta-core_2.12-2.2.0.jar && \
-   # mv delta-core_2.12-2.2.0.jar $SPARK_HOME/jars/ 
+RUN wget -O delta-core_2.12-2.2.0.jar https://repo1.maven.org/maven2/io/delta/delta-core_2.12/2.2.0/delta-core_2.12-2.2.0.jar && \
+    mv delta-core_2.12-2.2.0.jar $SPARK_HOME/jars/ 
+RUN wget -O delta-storage_2.12-2.2.0.jar https://repo1.maven.org/maven2/io/delta/delta-storage/2.2.0/delta-storage-2.2.0.jar  && \
+    mv delta-storage_2.12-2.2.0.jar $SPARK_HOME/jars/
+
     
-#RUN pyspark --packages io.delta:delta-core_2.12:2.2.0 
-#--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" 
-#--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog"
 
-
-# Add Delta Lake configuration to Spark
-#RUN echo "spark.sql.extensions io.delta.sql.DeltaSparkSessionExtension" >> $SPARK_HOME/conf/spark-defaults.conf && \
-    #echo "spark.sql.catalog.spark_catalog org.apache.spark.sql.delta.catalog.DeltaCatalog" >> $SPARK_HOME/conf/spark-defaults.conf 
 
 
 
@@ -96,19 +90,21 @@ RUN mv /tmp/ssh_config ~/.ssh/config && \
     mv /tmp/workers $HADOOP_HOME/etc/hadoop/workers && \
     mv /tmp/start-hadoop.sh ~/start-hadoop.sh && \
     mv /tmp/run-wordcount.sh ~/run-wordcount.sh && \
-    mv /tmp/spark-defaults.conf $SPARK_HOME/conf/spark-defaults.conf 
+    mv /tmp/spark-defaults.conf $SPARK_HOME/conf/spark-defaults.conf && \
+    mv /tmp/add-spark-jars-to-hdfs.sh ~/add-spark-jars-to-hdfs.sh
 
 #Maybe here i should add the start container.sh and resize.sh 
 
 RUN chmod +x ~/start-hadoop.sh && \
-    #chmod +x ~/start-container.sh && \
     chmod +x ~/run-wordcount.sh && \
     chmod +x $HADOOP_HOME/sbin/start-dfs.sh && \
-    chmod +x $HADOOP_HOME/sbin/start-yarn.sh 
+    chmod +x $HADOOP_HOME/sbin/start-yarn.sh && \
+    chmod +x ~/add-spark-jars-to-hdfs.sh
 
 # format namenode 
 RUN /usr/local/hadoop/bin/hdfs namenode -format
 
+#scripts to start automatically everytime the container starts
 CMD [ "sh", "-c", "service ssh start; bash"]
 
 
