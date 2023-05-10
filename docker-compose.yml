@@ -5,3 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile
     image: hadoop-spark-delta:latest
+  
+ 
+  
+    
