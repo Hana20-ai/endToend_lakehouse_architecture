@@ -25,7 +25,7 @@ while [ $i -lt $N ]
 do
 #delete slave if it already exists 
 	sudo docker rm -f hadoop-slave$i &> /dev/null
-	echo "start hadoop-slave$i container..."
+	echo "start hadoop-worker$i container..."
 #create new containers 
 	sudo docker run -itd \
 	                --net=myservice \
