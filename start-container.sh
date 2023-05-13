@@ -19,7 +19,8 @@ sudo docker run -itd \
                 hadoop-spark-delta:latest &> /dev/null
 
 
-# start hadoop slave container
+
+# start hadoop workers
 i=1
 while [ $i -lt $N ]
 do
@@ -32,6 +33,7 @@ do
 	                --name hadoop-slave$i \
 	                --hostname hadoop-slave$i \
 	                hadoop-spark-delta:latest &> /dev/null
+    #docker network connect endtoend_lakehouse_deltalake_nifi-network hadoop-slave$i
 	i=$(( $i + 1 ))
 done 
 

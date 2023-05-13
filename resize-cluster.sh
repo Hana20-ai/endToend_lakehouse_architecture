@@ -12,7 +12,7 @@ fi
 # change slaves file
 i=1
 rm config/workers
-while [ $i -lt $N ]
+while [ $i -lt $N-1 ]
 do
 	echo "hadoop-worker$i" >> config/workers
 	((i++))

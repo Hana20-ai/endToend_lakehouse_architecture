@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     image: hadoop-spark-delta:latest
     networks:
-            - nifi-network
+           - nifi-network
     volumes:
       - spark_jars:/user/spark/share/lib
       - sales_silver:/delta/tables/sales/sales_silver
@@ -23,7 +23,7 @@ services:
         environment:
             - ALLOW_ANONYMOUS_LOGIN=yes
         networks:
-            - nifi-network
+           - nifi-network
         restart: always
 
     # data extraction, transformation and load service
@@ -44,6 +44,7 @@ services:
       - NIFI_CLUSTER_NODE_PROTOCOL_PORT=8082
     networks:
             - nifi-network
+            
     volumes:
             - nifi-database_repository:/opt/nifi/nifi-current/database_repository
             - nifi-flowfile_repository:/opt/nifi/nifi-current/flowfile_repository
@@ -66,6 +67,7 @@ services:
             - type : bind
               source: ./config/hdfs-site.xml
               target: /opt/nifi/nifi-current/lib/hdfs-site.xml
+    #command: sh -c "echo '172.30.0.2 hadoop-master' >> /etc/hosts"
 
             
     #restart: on-failure
@@ -89,6 +91,7 @@ services:
             - ./nifi_registry/flow_storage:/opt/nifi-registry/nifi-registry-current/flow_storage
         networks:
             - nifi-network
+            
     
 
     # relational database
@@ -106,6 +109,7 @@ services:
             - "5432:5432"
         networks:
             - nifi-network
+            
         restart: on-failure
         healthcheck:
             test: ["CMD", "pg_isready"]
@@ -127,6 +131,7 @@ services:
             - "5050:80"
         networks:
             - nifi-network
+          
         restart: on-failure
         depends_on:
         - postgres
@@ -136,6 +141,7 @@ services:
 networks:
   nifi-network:
     driver: bridge
+  
 
 volumes:
   spark_jars:
