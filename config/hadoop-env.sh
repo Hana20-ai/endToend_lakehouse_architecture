@@ -74,7 +74,7 @@ export HADOOP_SECURE_DN_USER=${HADOOP_SECURE_DN_USER}
 # Where log files are stored in the secure data environment.
 export HADOOP_SECURE_DN_LOG_DIR=${HADOOP_LOG_DIR}/${HADOOP_HDFS_USER}
 
-#DEFINE THE USERS OF THE CONATIANER AS root############ errooor 
+#DEFINE THE USERS OF THE CONATIANER AS hadoop############ 
 export HDFS_NAMENODE_USER=root
 export HDFS_DATANODE_USER=root
 export HDFS_SECONDARYNAMENODE_USER=root

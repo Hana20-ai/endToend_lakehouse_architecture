@@ -6,6 +6,12 @@ services:
       dockerfile: Dockerfile
     image: hadoop-spark-delta:latest
 
+  hivemetastore:
+    build:
+      context: ./hive/hive-metastore
+      dockerfile: Dockerfile
+    image: hive-metastore:latest
+
   # configuration manager for NiFi
   zookeeper:
         hostname: zookeeper
