@@ -36,8 +36,9 @@ ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 #ENV PYSPARK_PYTHON=/usr/bin/python3
 ENV HADOOP_HOME=/usr/local/hadoop 
 ENV HIVE_HOME=/usr/local/hive
+ENV KAFKA_HOME=/usr/local/kafka
 #maybe here, should add deltalake as well, plus the delta_home maybe 
-ENV PATH=$PATH:/usr/local/hadoop/bin:/usr/local/hadoop/sbin:/usr/local/spark/bin:/usr/local/hive/bin
+ENV PATH=$PATH:/usr/local/hadoop/bin:/usr/local/hadoop/sbin:/usr/local/spark/bin:/usr/local/hive/bin:/usr/local/kafka/bin
 ENV HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
 ENV LD_LIBRARY_PATH=/usr/local/hadoop/lib/native:$LD_LIBRARY_PATH 
 
@@ -63,6 +64,12 @@ RUN wget -O delta-core_2.12-2.2.0.jar https://repo1.maven.org/maven2/io/delta/de
     mv delta-core_2.12-2.2.0.jar $SPARK_HOME/jars/ 
 RUN wget -O delta-storage_2.12-2.2.0.jar https://repo1.maven.org/maven2/io/delta/delta-storage/2.2.0/delta-storage-2.2.0.jar  && \
     mv delta-storage_2.12-2.2.0.jar $SPARK_HOME/jars/
+
+# install kafka
+RUN wget https://archive.apache.org/dist/kafka/3.4.0/kafka_2.12-3.4.0.tgz && \  
+    tar -xzvf kafka_2.12-3.4.0.tgz && \
+    mv kafka_2.12-3.4.0.tgz /usr/local/kafka && \
+    rm kafka_2.12-3.4.0.tgz
 
 # install hive
 RUN wget https://archive.apache.org/dist/hive/hive-3.1.0/apache-hive-3.1.0-bin.tar.gz -P /usr/local/
@@ -104,6 +111,7 @@ RUN mv /tmp/ssh_config ~/.ssh/config && \
     mv /tmp/mapred-site.xml $HADOOP_HOME/etc/hadoop/mapred-site.xml && \
     mv /tmp/yarn-site.xml $HADOOP_HOME/etc/hadoop/yarn-site.xml && \
     mv /tmp/workers $HADOOP_HOME/etc/hadoop/workers && \
+    mv /tmp/start-kafka-zookeeper.sh ~/start-kafka-zookeeper.sh && \
     mv /tmp/start-hadoop.sh ~/start-hadoop.sh && \
     mv /tmp/run-wordcount.sh ~/run-wordcount.sh && \
     mv /tmp/spark-defaults.conf $SPARK_HOME/conf/spark-defaults.conf && \
@@ -117,6 +125,7 @@ RUN mv /tmp/ssh_config ~/.ssh/config && \
 RUN useradd -m -s /bin/bash hadoop
 
 RUN chmod +x ~/start-hadoop.sh && \
+    chmod +x ~/start-kafka-zookeeper.sh && \
     chmod +x ~/run-wordcount.sh && \
     chmod +x $HADOOP_HOME/sbin/start-dfs.sh && \
     chmod +x $HADOOP_HOME/sbin/start-yarn.sh && \
