@@ -6,8 +6,6 @@ LABEL maintainer="Hana Bouacila <ih_bouacila@esi.dz>, Yousra Fantazi <iy_fantazi
 #configure the work directory 
 WORKDIR /root
 
-
-
 # Update packages and install necessary tools : install openssh-server, openjdk and wget, vim, python 
 RUN apt-get update && apt-get -y upgrade && \
     apt-get -y install  openssh-server  wget vim openjdk-8-jdk && \
@@ -24,7 +22,7 @@ ENV SCALA_VERSION 2.12
 
 
 # install hadoop 3.3.4
-RUN wget https://dlcdn.apache.org/hadoop/common/hadoop-3.3.4/hadoop-3.3.4.tar.gz && \
+RUN wget --no-check-certificate https://dlcdn.apache.org/hadoop/common/hadoop-3.3.4/hadoop-3.3.4.tar.gz && \
     tar -xzf hadoop-3.3.4.tar.gz && \
     mv hadoop-3.3.4 /usr/local/hadoop && \
     rm hadoop-3.3.4.tar.gz
@@ -44,7 +42,7 @@ ENV LD_LIBRARY_PATH=/usr/local/hadoop/lib/native:$LD_LIBRARY_PATH
 
 
 # install spark 3.3.2
-RUN wget https://dlcdn.apache.org/spark/spark-3.3.2/spark-3.3.2-bin-hadoop3.tgz && \
+RUN wget --no-check-certificate https://dlcdn.apache.org/spark/spark-3.3.2/spark-3.3.2-bin-hadoop3.tgz && \
     tar -xvf spark-3.3.2-bin-hadoop3.tgz && \
     mv spark-3.3.2-bin-hadoop3 /usr/local/spark && \
     rm spark-3.3.2-bin-hadoop3.tgz
@@ -60,19 +58,19 @@ ENV SPARK_HOME=/usr/local/spark
    # wget https://repo1.maven.org/maven2/io/delta/delta-storage/$DELTA_VERSION/delta-storage-$DELTA_VERSION.jar -P $SPARK_HOME/jars/
 
 # Install Delta Lake 2.2.0
-RUN wget -O delta-core_2.12-2.2.0.jar https://repo1.maven.org/maven2/io/delta/delta-core_2.12/2.2.0/delta-core_2.12-2.2.0.jar && \
+RUN wget --no-check-certificate -O delta-core_2.12-2.2.0.jar https://repo1.maven.org/maven2/io/delta/delta-core_2.12/2.2.0/delta-core_2.12-2.2.0.jar && \
     mv delta-core_2.12-2.2.0.jar $SPARK_HOME/jars/ 
 RUN wget -O delta-storage_2.12-2.2.0.jar https://repo1.maven.org/maven2/io/delta/delta-storage/2.2.0/delta-storage-2.2.0.jar  && \
     mv delta-storage_2.12-2.2.0.jar $SPARK_HOME/jars/
 
 # install kafka
-RUN wget https://archive.apache.org/dist/kafka/3.4.0/kafka_2.12-3.4.0.tgz && \  
+RUN wget  https://archive.apache.org/dist/kafka/3.4.0/kafka_2.12-3.4.0.tgz && \  
     tar -xzvf kafka_2.12-3.4.0.tgz && \
-    mv kafka_2.12-3.4.0.tgz /usr/local/kafka && \
+    mv kafka_2.12-3.4.0 /usr/local/kafka && \
     rm kafka_2.12-3.4.0.tgz
 
 # install hive
-RUN wget https://archive.apache.org/dist/hive/hive-3.1.0/apache-hive-3.1.0-bin.tar.gz -P /usr/local/
+RUN wget --no-check-certificate https://archive.apache.org/dist/hive/hive-3.1.0/apache-hive-3.1.0-bin.tar.gz -P /usr/local/
 RUN tar -xzf /usr/local/apache-hive-3.1.0-bin.tar.gz -C /usr/local/
 RUN mv  /usr/local/apache-hive-3.1.0-bin /usr/local/hive
 RUN rm -rf /usr/local/apache-hive-3.1.0*

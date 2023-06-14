@@ -5,12 +5,21 @@ services:
       context: .
       dockerfile: Dockerfile
     image: hadoop-spark-delta:latest
+    networks:
+           - nifi-network
+    volumes:
+      - hdfs_data:/root/hdfs/datanode
+      - namenode_files:/root/hdfs/namenode
+
+     
 
   hivemetastore:
     build:
       context: ./hive/hive-metastore
       dockerfile: Dockerfile
     image: hive-metastore:latest
+  
+
 
   # configuration manager for NiFi
   zookeeper:
@@ -53,7 +62,17 @@ services:
             - ./nifi/credentials:/opt/nifi/nifi-current/credentials
             # uncomment after copying the /conf directory from the container to your local directory to persist NiFi flows
             #- ./nifi/conf:/opt/nifi/nifi-current/conf
-           
+           #ALLOW NIFI TO communicate with postgresql 
+            - type : bind
+              source: ./config/jars/
+              target: /opt/nifi/nifi-current/drive
+              #ALLOW NIFI TO WRITE INTO HDFS 
+            - type : bind
+              source: ./config/core-site.xml
+              target: /home/nifi/core-site.xml
+            - type : bind
+              source: ./config/hdfs-site.xml
+              target: /home/nifi/hdfs-site.xml
     restart: on-failure
       
     # version control for nifi flows
@@ -113,12 +132,37 @@ services:
         networks:
             - nifi-network
         restart: on-failure
+  
+  ####### JUPYTER
+  #jupyter-notebook:
+   # build: ./jupyter
+    #container_name: jupyter-notebook
+    #ports:
+     # - 8888:8888
+      #- 4040:4040
+    #volumes:
+     # - shared-workspace:/opt/workspace
+  
+
+  jupyter-notebook:
+        container_name: jupyter-notebook
+        image: 'jupyter/datascience-notebook' 
+        ports:
+          - 8888:8888
+          - 4040:4040
+        volumes:
+          - shared-workspace:/home/jovyan
+        user: root
+        environment:
+          - GRANT_SUDO=yes
+        
         
 
   
 networks:
   nifi-network:
     driver: bridge
+  
 
 volumes:
   nifi-database_repository:
@@ -129,5 +173,8 @@ volumes:
   nifi-state:
   postgres:
   pgadmin:
+  shared-workspace:
+  namenode_files:
+  hdfs_data:
 
 
