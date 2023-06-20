@@ -1,13 +1,6 @@
 #!/bin/bash
 sudo docker network create --driver=bridge myservice
 
-#docker build -t postgresql-hms -f hive/hive-metastore .
-
-# Starting Postresql Hive metastore
-  #echo ">> Starting postgresql hive metastore ..."
-  #docker run -d --net myservice  --hostname psqlhms --name metastor -e POSTGRES_PASSWORD=hive -it postgresql-hms
-  #sleep 5
-
 # the default node number is 3
 N=${1:-3}
 
@@ -48,9 +41,6 @@ done
  
  #add HMS to the network 
  #docker network connect myservice  hive-metastore
-  docker network connect myservice  jupyter-notebook
-
-
  
  #echo ">> Preparing hdfs for hive ..."
   #sudo docker exec -u hadoop -it hadoop-master hdfs dfs -mkdir -p /tmp
@@ -62,6 +52,9 @@ done
   #sudo docker exec -u hadoop -d hadoop-master hive --service metastore
   #sudo docker exec -u hadoop -d hadoop-master hive --service hiveserver2
 
- 
-  docker cp /home/pfe06-hana/data/Bronze  hadoop-master:/root/data
+  # Starting Postresql Hive metastore
+  #echo ">> Starting postgresql hive metastore ..."
+  #docker run -d --net myservice  --hostname psqlhms --name metastor -e POSTGRES_PASSWORD=hive -it postgresql-hms
+  #sleep 5
+
   sudo docker exec -it hadoop-master bash
