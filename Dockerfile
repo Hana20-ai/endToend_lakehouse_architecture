@@ -12,11 +12,9 @@ RUN apt-get update && apt-get -y upgrade && \
    
     
 ENV SPARK_VERSION 3.3.2
-ENV HADOOP_VERSION 3
+ENV HADOOP_VERSION 3.3.4
 ENV DELTA_VERSION 2.2.0
-ENV SCALA_VERSION 2.12
-   
-
+ENV SCALA_VERSION 2.1
 
 
 # install hadoop 3.3.4
@@ -31,8 +29,9 @@ RUN wget https://dlcdn.apache.org/hadoop/common/hadoop-3.3.4/hadoop-3.3.4.tar.gz
 ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 
 #ENV PYSPARK_PYTHON=/usr/bin/python3
 ENV HADOOP_HOME=/usr/local/hadoop 
+ENV KAFKA_HOME=/usr/local/kafka
 #maybe here, should add deltalake as well, plus the delta_home maybe 
-ENV PATH=$PATH:/usr/local/hadoop/bin:/usr/local/hadoop/sbin:/usr/local/spark/bin
+ENV PATH=$PATH:/usr/local/hadoop/bin:/usr/local/hadoop/sbin:/usr/local/spark/bin:/usr/local/kafka/bin
 ENV HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
 ENV LD_LIBRARY_PATH=/usr/local/hadoop/lib/native:$LD_LIBRARY_PATH 
 
@@ -60,7 +59,11 @@ RUN wget -O delta-storage_2.12-2.2.0.jar https://repo1.maven.org/maven2/io/delta
     mv delta-storage_2.12-2.2.0.jar $SPARK_HOME/jars/
 
     
-
+# install kafka
+RUN wget  https://archive.apache.org/dist/kafka/3.4.0/kafka_2.12-3.4.0.tgz && \  
+    tar -xzvf kafka_2.12-3.4.0.tgz && \
+    mv kafka_2.12-3.4.0 /usr/local/kafka && \
+    rm kafka_2.12-3.4.0.tgz
 
 
 
@@ -90,6 +93,7 @@ RUN mv /tmp/ssh_config ~/.ssh/config && \
     mv /tmp/workers $HADOOP_HOME/etc/hadoop/workers && \
     mv /tmp/start-hadoop.sh ~/start-hadoop.sh && \
     mv /tmp/run-wordcount.sh ~/run-wordcount.sh && \
+    mv /tmp/start-kafka-zookeeper.sh ~/start-kafka-zookeeper.sh && \
     mv /tmp/spark-defaults.conf $SPARK_HOME/conf/spark-defaults.conf && \
     mv /tmp/add-spark-jars-to-hdfs.sh ~/add-spark-jars-to-hdfs.sh
 
@@ -98,6 +102,7 @@ RUN mv /tmp/ssh_config ~/.ssh/config && \
 RUN chmod +x ~/start-hadoop.sh && \
     chmod +x ~/run-wordcount.sh && \
     chmod +x $HADOOP_HOME/sbin/start-dfs.sh && \
+    chmod +x ~/start-kafka-zookeeper.sh && \
     chmod +x $HADOOP_HOME/sbin/start-yarn.sh && \
     chmod +x ~/add-spark-jars-to-hdfs.sh
 

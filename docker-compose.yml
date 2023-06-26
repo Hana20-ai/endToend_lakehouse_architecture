@@ -5,6 +5,142 @@ services:
       context: .
       dockerfile: Dockerfile
     image: hadoop-spark-delta:latest
+    volumes:
+      - hdfs_data:/root/hdfs/datanode
+      - namenode_files:/root/hdfs/namenode
+  
+
+   # configuration manager for NiFi
+  zookeeper:
+        hostname: zookeeper
+        container_name: zookeeper
+        image: 'bitnami/zookeeper:latest'
+        restart: on-failure
+        environment:
+            - ALLOW_ANONYMOUS_LOGIN=yes
+        networks:
+            - nifi-network
+
+  # data extraction, transformation and load service
+  nifi:
+    image: apache/nifi:latest
+    ports:
+      - 9999 # Unsecured HTTP Web Port
+    environment:
+    #Nifi web UI credentials 
+      #- SINGLE_USER_CREDENTIALS_USERNAME=admin
+      #- SINGLE_USER_CREDENTIALS_PASSWORD=adminHANAWWWFFF
+      - NIFI_WEB_HTTP_PORT=9999
+      - NIFI_ZK_CONNECT_STRING=zookeeper:2181
+      - NIFI_SENSITIVE_PROPS_KEY=l5bGW7Miy5Vv5sGTr8tXqLyVfpOdTnY0
+      - NIFI_ELECTION_MAX_WAIT=1 mins
+      - NIFI_CLUSTER_PROTOCOL_HEARTBEAT_INTERVAL=5 sec
+      - NIFI_CLUSTER_IS_NODE=true
+      - NIFI_CLUSTER_NODE_PROTOCOL_PORT=8082
+    networks:
+            - nifi-network
+    volumes:
+            - nifi-database_repository:/opt/nifi/nifi-current/database_repository
+            - nifi-flowfile_repository:/opt/nifi/nifi-current/flowfile_repository
+            - nifi-content_repository:/opt/nifi/nifi-current/content_repository
+            - nifi-provenance_repository:/opt/nifi/nifi-current/provenance_repository
+            - nifi-conf:/opt/nifi/nifi-current/conf
+            - nifi-state:/opt/nifi/nifi-current/state
+            - nifi-logs:/opt/nifi/nifi-current/logs
+            - nifi-jdbc:/opt/nifi/nifi-current/jdbc
+            - nifi-credentials:/opt/nifi/nifi-current/credentials
+            # uncomment after copying the /conf directory from the container to your local directory to persist NiFi flows
+            #- ./nifi/conf:/opt/nifi/nifi-current/conf
+           #ALLOW NIFI TO communicate with postgresql 
+            - type : bind
+              source: ./config/jars/
+              target: /opt/nifi/nifi-current/drive
+              #ALLOW NIFI TO WRITE INTO HDFS 
+            - type : bind
+              source: ./config/core-site.xml
+              target: /home/nifi/core-site.xml
+            - type : bind
+              source: ./config/hdfs-site.xml
+              target: /home/nifi/hdfs-site.xml
+    restart: on-failure
+
+    # relational database
+  postgres:
+        hostname: postgres
+        container_name: postgres
+        image: 'postgres:latest'  
+        environment:
+            POSTGRES_USER: 'postgres'
+            POSTGRES_PASSWORD: 'postgres'
+            PGDATA: /data/postgres
+        volumes:
+            - postgres_data:/data/postgres
+        ports:
+            - "5432:5432"
+        networks:
+            - nifi-network
+        restart: on-failure
+        healthcheck:
+            test: ["CMD", "pg_isready"]
+            interval: 30s
+            timeout: 20s
+            retries: 3
+
+
+    # database administration tool
+  pgadmin:
+        hostname: pgadmin
+        container_name: pgadmin
+        image: 'dpage/pgadmin4:latest'  # latest image as of 2021-11-08
+        environment:
+            PGADMIN_DEFAULT_EMAIL: 'pgadmin4@pgadmin.org'
+            PGADMIN_DEFAULT_PASSWORD: 'admin'
+            PGADMIN_CONFIG_SERVER_MODE: 'False'
+        volumes:
+            - pgadmin_data:/var/lib/pgadmin
+        ports:
+            - "5050:80"
+        networks:
+            - nifi-network
+        restart: on-failure
+    
+    #predictive analytics notebook 
+  jupyter-notebook:
+        container_name: jupyter-notebook
+        image: 'jupyter/datascience-notebook' 
+        ports:
+          - 8888:8888
+          - 4040:4040
+        volumes:
+          - shared-workspace:/home/jovyan
+        user: root
+        environment:
+          - GRANT_SUDO=yes
+  
+
+networks:
+  nifi-network:
+    driver: bridge
+  
+
+volumes:
+  nifi-database_repository:
+  nifi-flowfile_repository:
+  nifi-content_repository:
+  nifi-provenance_repository:
+  nifi-conf:
+  nifi-state:
+  nifi-logs:
+  nifi-jdbc:
+  nifi-credentials:
+  postgres_data:
+  pgadmin_data:
+  shared-workspace:
+  namenode_files:
+  hdfs_data:
+
+
+
   
  
   
