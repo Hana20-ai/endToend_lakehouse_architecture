@@ -95,7 +95,14 @@ RUN mv /tmp/ssh_config ~/.ssh/config && \
     mv /tmp/run-wordcount.sh ~/run-wordcount.sh && \
     mv /tmp/start-kafka-zookeeper.sh ~/start-kafka-zookeeper.sh && \
     mv /tmp/spark-defaults.conf $SPARK_HOME/conf/spark-defaults.conf && \
-    mv /tmp/add-spark-jars-to-hdfs.sh ~/add-spark-jars-to-hdfs.sh
+    mv /tmp/add-spark-jars-to-hdfs.sh ~/add-spark-jars-to-hdfs.sh && \
+    mv /tmp/convertToDeltaBatch.scala ~/convertToDeltaBatch.scala && \
+    mv /tmp/convertToDeltaStreaming.scala ~/convertToDeltaStreaming.scala && \
+    mv /tmp/hdfs_copy_file.sh ~/hdfs_copy_file.sh && \
+    #not built yet 
+    mv /tmp/detectNulls.py ~/detectNulls.py
+
+
 
 #Maybe here i should add the start container.sh and resize.sh 
 
@@ -104,8 +111,10 @@ RUN chmod +x ~/start-hadoop.sh && \
     chmod +x $HADOOP_HOME/sbin/start-dfs.sh && \
     chmod +x ~/start-kafka-zookeeper.sh && \
     chmod +x $HADOOP_HOME/sbin/start-yarn.sh && \
-    chmod +x ~/add-spark-jars-to-hdfs.sh
-
+    chmod +x ~/add-spark-jars-to-hdfs.sh && \
+    chmod +x ~/convertToDeltaBatch.scala && \
+    chmod +x ~/convertToDeltaStreaming.scala && \
+    chmod +x ~/hdfs_copy_file.sh
 # format namenode 
 RUN /usr/local/hadoop/bin/hdfs namenode -format
 

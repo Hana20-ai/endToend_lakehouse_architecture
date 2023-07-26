@@ -8,6 +8,7 @@ services:
     volumes:
       - hdfs_data:/root/hdfs/datanode
       - namenode_files:/root/hdfs/namenode
+      - data:/root/data
   
 
    # configuration manager for NiFi
@@ -62,6 +63,10 @@ services:
             - type : bind
               source: ./config/hdfs-site.xml
               target: /home/nifi/hdfs-site.xml
+            - type : bind
+              source: ./config/bootstrap.conf
+              target: /opt/nifi/nifi-current/conf/bootstrap.conf
+            
     restart: on-failure
 
     # relational database
@@ -87,6 +92,27 @@ services:
             retries: 3
 
 
+  #postgres:
+       # hostname: 65.108.8.217
+       # container_name: postgres
+       # image: 'postgres:latest'  
+       # environment:
+           # POSTGRES_USER: 'bi'
+           # POSTGRES_PASSWORD: 'ro@2023'
+           # PGDATA: /data/postgres
+        #volumes:
+           # - postgres_data:/data/postgres
+        #ports:
+          #  - "17432:5432"
+        #networks:
+          #  - nifi-network
+        #restart: on-failure
+        #healthcheck:
+           # test: ["CMD", "pg_isready"]
+           # interval: 30s
+           # timeout: 20s
+           # retries: 3
+
     # database administration tool
   pgadmin:
         hostname: pgadmin
@@ -110,7 +136,7 @@ services:
         image: 'jupyter/datascience-notebook' 
         ports:
           - 8888:8888
-          - 4040:4040
+          #- 4040:4040   
         volumes:
           - shared-workspace:/home/jovyan
         user: root
@@ -138,6 +164,7 @@ volumes:
   shared-workspace:
   namenode_files:
   hdfs_data:
+  data:
 
 
 
