@@ -8,7 +8,6 @@ product_product_df = spark.read.format("delta").load("/delta/silver/product_prod
 product_template_df =spark.read.format("delta").load("/delta/silver/product_template")
 product_marque_df = spark.read.format("delta").load("/delta/silver/product_marque")
 operating_unit_df = spark.read.format("delta").load("/delta/silver/operating_unit")
-res_store_df = spark.read.format("delta").load("/delta/silver/res_store")
 res_partner_df = spark.read.format("delta").load("/delta/silver/res_partner")
 res_partner_category_df = spark.read.format("delta").load("/delta/silver/res_partner_category")
 res_partner_title_df = spark.read.format("delta").load("/delta/silver/res_partner_title")
@@ -28,56 +27,26 @@ dsd_order_df= spark.read.format("delta").load("/delta/silver/dsd_order")
 dsd_session_df= spark.read.format("delta").load("/delta/silver/dsd_session")
 dsd_van_df= spark.read.format("delta").load("/delta/silver/dsd_van")
 res_users_df= spark.read.format("delta").load("/delta/silver/res_users")
+dsd_route_df = spark.read.format("delta").load("/delta/silver/dsd_route")
 
 
 
 
 # Filter the DataFrame to keep only the rows where "category" is equal to "order"
 sale_order_df = sale_order_df.filter(sale_order_df["category"] == "order")
-sale_order_df = sale_order_df.filter(sale_order_df["state"] == "done" or sale_order_df["state"] == "done" or sale_order_df["state"] == "progress" or sale_order_df["state"] == "shipped" or sale_order_df["state"] == "waiting_ship_payment" or sale_order_df["state"] == "waiting_shipping" )
+sale_order_df = sale_order_df.filter(sale_order_df["state"] == "done" or sale_order_df["state"] == "done" or sale_order_df["state"] == "shipped" or sale_order_df["state"] == "manual")
 
 
-#les commandes 
-join1_df = sale_order_line_df.join(sale_order_df, sale_order_line_df["order_id"] == sale_order_df["id"]) \
-    .select(
-            sale_order_line_df["product_id"],
-            sale_order_line_df["product_uom"],
-            sale_order_line_df["product_uom_qty"].alias("ordered_qty_uom"),
-            sale_order_line_df["name"].alias("name_product"), 
-            sale_order_line_df["product_qty"].alias("ordered_qty"),
-            sale_order_line_df["price_unit"].alias("product_price_unit"),
-            sale_order_line_df["purchase_price"].alias("product_purchase_price"), 
-            sale_order_line_df["discount"], 
-            sale_order_line_df["discount_amount"].alias("sale_discount_amount"), 
-            sale_order_line_df["global_discount_amount"].alias("sale_discount_amount_global"), 
-            sale_order_line_df["is_shipped"].alias("order_is_shipped"),
-            sale_order_line_df["operating_unit_id"],
-            sale_order_df["company_id"],
-            sale_order_df["partner_id"].alias("client_id"), 
-            sale_order_df["dsd_weight"].alias("order_weight"), 
-            sale_order_df["request_date"].alias("order_request_date"), 
-            sale_order_df["amount_total"].alias("order_amount_total"),
-            sale_order_df["name"].alias("order_ref"),
-            sale_order_df["state"].alias("order_state"),
-            sale_order_df["date_order"]
 
-        )
 
-#Unités d'organisation et magasins 
-join2_df = operating_unit_df.join(res_store_df, operating_unit_df["store_id"] == res_store_df["id"]) \
-    .select(
-            operating_unit_df["id"].alias("ou_id"),
-            operating_unit_df["is_company"].alias("ou_is_company"),
-            operating_unit_df["name"].alias("ou_name"),
-            operating_unit_df["ou_warehouse"], 
-            operating_unit_df["ou_store"],
-            res_store_df["name"].alias("store_name"),
-            res_store_df["code"].alias("store_code"),
-            res_store_df["street"].alias("store_street"),
-            res_store_df["city"].alias("store_city"),
-            res_store_df["company_registry"].alias("store_company_registry") 
-        
-        )
+#Unités d'organisation
+operating_unit_df = operating_unit_df.select("id", "is_company", "name", "ou_warehouse", "ou_store")\
+    .withColumnRenamed("id", "ou_id")\
+    .withColumnRenamed("is_company", "ou_is_company")\
+    .withColumnRenamed("name", "ou_name")
+
+
+
 
 #CLIENT
 join3_df = res_partner_df.join(res_partner_title_df, res_partner_df["title"] == res_partner_title_df["id"]) \
@@ -105,7 +74,48 @@ join3_df = res_partner_df.join(res_partner_title_df, res_partner_df["title"] == 
                      res_partner_df["geo_point"].alias("client_geo_point"),
                      res_partner_title_df["name"].alias("client_title")
             )
-                 
+
+#vendeur  
+vendeur_df = res_users_df.join (join3_df, res_users_df["partner_id"] == join3_df["id_client"])\
+    .select(
+            res_users_df["id"].alias("vendeur_id"),
+            join3_df["client_name"].alias("vendeur"),
+            join3_df["client_identity_document"].alias("vendeur_identity_document"),
+            join3_df["client_is_blocked"].alias("vendeur_is_blocked"),
+            join3_df["client_is_active"].alias("vendeur_is_active"),
+    )
+
+
+#les commandes 
+join1_df = sale_order_line_df.join(sale_order_df, sale_order_line_df["order_id"] == sale_order_df["id"]) \
+    .join (vendeur_df, sale_order_df["user_id"]== vendeur_df["vendeur_id"])\
+    .select(
+            sale_order_line_df["product_id"],
+            sale_order_line_df["product_uom"],
+            sale_order_line_df["product_uom_qty"].alias("ordered_qty_uom"),
+            sale_order_line_df["name"].alias("name_product"), 
+            sale_order_line_df["product_qty"].alias("ordered_qty"),
+            sale_order_line_df["price_unit"].alias("product_price_unit"),
+            sale_order_line_df["purchase_price"].alias("product_purchase_price"), 
+            sale_order_line_df["discount"], 
+            sale_order_line_df["discount_amount"].alias("sale_discount_amount"), 
+            sale_order_line_df["global_discount_amount"].alias("sale_discount_amount_global"), 
+            sale_order_line_df["is_shipped"].alias("order_is_shipped"),
+            sale_order_line_df["operating_unit_id"],
+            sale_order_df["company_id"],
+            sale_order_df["partner_id"].alias("client_id"), 
+            sale_order_df["dsd_weight"].alias("order_weight"), 
+            sale_order_df["request_date"].alias("order_request_date"), 
+            sale_order_df["amount_total"].alias("order_amount_total"),
+            sale_order_df["name"].alias("order_ref"),
+            sale_order_df["state"].alias("order_state"),
+            sale_order_df["date_order"],
+            vendeur_df["vendeur"],
+            vendeur_df["vendeur_identity_document"],
+            vendeur_df["vendeur_is_blocked"],
+            vendeur_df["vendeur_is_active"],
+
+        )
 #sociétés 
 
 join4_df = res_company_df.join(res_country_state_df, res_company_df["state_id"] == res_country_state_df["id"]) \
@@ -154,9 +164,6 @@ join5_df = product_product_df.join(product_template_df, product_product_df["prod
             product_template_df["mes_type"].alias("product_type_mesure"),
             product_product_df["price1"].alias("product_price_detail"),
             product_product_df["price2"].alias("product_price_gros"),
-            product_product_df["price3"].alias("product_price3"),
-            product_product_df["price4"].alias("product_price4"),
-            product_product_df["price5"].alias("product_price5"),
             product_marque_df["name"].alias("product_marque"),
             res_category_df["categ_field"].alias("product_category"),
             res_category_df["name"].alias("product_category_name")
@@ -189,7 +196,7 @@ join7_df = join5_df.join(join6_df, join5_df["product_uom_id"] == join6_df["uom_i
         )
 
 #cmd B2B & operating_unit and company and client 
-join8_df = join1_df.join(join2_df, join1_df["operating_unit_id"] == join2_df["ou_id"]) \
+join8_df = join1_df.join(operating_unit_df, join1_df["operating_unit_id"] == operating_unit_df["ou_id"]) \
     .join(join3_df, join1_df["client_id"] == join3_df["id_client"]) \
     .join(join4_df, join1_df["company_id"] == join4_df["company_id"] ) \
     .select( join1_df["product_id"],join1_df["product_uom"],
@@ -199,9 +206,12 @@ join8_df = join1_df.join(join2_df, join1_df["operating_unit_id"] == join2_df["ou
             join1_df["name_product"],join1_df["ordered_qty"],join1_df["product_price_unit"],join1_df["product_purchase_price"], join1_df["discount"], 
             join1_df["sale_discount_amount"], join1_df["sale_discount_amount_global"], join1_df["order_is_shipped"],
             join1_df["order_weight"], join1_df["order_request_date"], join1_df["order_amount_total"],join1_df["date_order"],
-            join2_df["ou_is_company"],
-            join2_df["ou_name"],join2_df["ou_warehouse"], join2_df["ou_store"],join2_df["store_name"],
-            join2_df["store_code"],join2_df["store_city"],join2_df["store_company_registry"],
+            join1_df["vendeur"],
+            join1_df["vendeur_identity_document"],
+            join1_df["vendeur_is_blocked"],
+            join1_df["vendeur_is_active"],
+            operating_unit_df["ou_is_company"],
+            operating_unit_df["ou_name"],operating_unit_df["ou_warehouse"], operating_unit_df["ou_store"],
             join3_df["client_is_company"],join3_df["client_name"],join3_df["client_street"],join3_df["client_city"],join3_df["client_zip"],
         #res_partner_df["state_id"].alias("client_state_id"),
             #res_partner_df["Website "].alias("client_Website"),
@@ -228,8 +238,8 @@ result_sale_df = join8_df.join(join7_df, join8_df["product_id"] == join7_df["pro
             join8_df["name_product"],join8_df["ordered_qty"],join8_df["product_price_unit"],join8_df["product_purchase_price"], join8_df["discount"], 
             join8_df["sale_discount_amount"], join8_df["sale_discount_amount_global"], join8_df["order_is_shipped"],
             join8_df["order_weight"], join8_df["order_request_date"], join8_df["order_amount_total"],join8_df["date_order"],
-            join8_df["ou_is_company"],join8_df["ou_name"],join8_df["ou_warehouse"], join8_df["ou_store"],join8_df["store_name"],
-            join8_df["store_code"],join8_df["store_city"],join8_df["store_company_registry"],
+            join8_df["ou_is_company"],join8_df["ou_name"],join8_df["ou_warehouse"], join8_df["ou_store"],
+            join8_df["vendeur"],join8_df["vendeur_identity_document"],join8_df["vendeur_is_blocked"], join8_df["vendeur_is_active"],
             join8_df["client_is_company"],join8_df["client_name"],join8_df["client_street"],join8_df["client_city"],join8_df["client_zip"],
         #res_partner_df["state_id"].alias("client_state_id"),
             #res_partner_df["Website "].alias("client_Website"),
@@ -258,8 +268,8 @@ result_sale_df.write.format("delta").save("/delta/sale_forecast")
 ######################dsd
 #dsd orders 
 
-dsd_session_df = dsd_session_df.filter(dsd_session_df["state"] == "closed" or dsd_session_df["state"] == "opened" or dsd_session_df["state"] == "confirmed" or dsd_session_df["state"] == "charging" or dsd_session_df["state"] == "closing_control" or dsd_session_df["state"] == "closing_exception")
-#tournnéé et van 
+dsd_session_df = dsd_session_df.filter(dsd_session_df["state"] == "closed" or dsd_session_df["state"] == "opened" or dsd_session_df["state"] == "closing_control" or dsd_session_df["state"] == "closing_exception")
+#tournnée et van 
 join10_df = dsd_session_df.join(dsd_van_df, dsd_session_df["config_id"] == dsd_van_df["id"]) \
     .select(
             dsd_session_df["id"].alias("session_id"),
@@ -268,35 +278,20 @@ join10_df = dsd_session_df.join(dsd_van_df, dsd_session_df["config_id"] == dsd_v
             dsd_session_df["start_at"].alias("session_start_at"),
             dsd_session_df["stop_at"].alias("session_stop_at"),
             dsd_van_df["name"].alias("van_name"),
-            dsd_van_df["state"].alias("van_state"),
-            dsd_van_df["store_id"]
+            dsd_van_df["state"].alias("van_state")
     )
 
-#session & van & store 
-join11_df = join10_df.join(res_store_df, join10_df["store_id"] == res_store_df["id"]) \
-    .select(
-            join10_df["session_id"],
-            join10_df["session_name"],
-            join10_df["session_state"],
-            join10_df["session_start_at"],
-            join10_df["session_stop_at"],
-            join10_df["van_name"],
-            join10_df["van_state"],
-            res_store_df["name"].alias("store_name"),
-            res_store_df["code"].alias("store_code"),
-            res_store_df["street"].alias("store_street"),
-            res_store_df["city"].alias("store_city"),
-            res_store_df["company_registry"].alias("store_company_registry") 
-    )
+
 
 #filter the dsd_orders to use 
-dsd_order_df = dsd_order_df.filter(dsd_order_df["state"] == "done" or dsd_session_df["state"] == "invoiced" or dsd_session_df["state"] == "progress" or dsd_session_df["state"] == "paid" )
+dsd_order_df = dsd_order_df.filter(dsd_order_df["state"] == "done" or dsd_session_df["state"] == "invoiced" or dsd_session_df["state"] == "paid" )
 dsd_order_df = dsd_order_df.filter(dsd_order_df["is_return"] == "false" )
 #dsd_order & session & partner & region & operating unit 
 join12_df= dsd_order_df.join(join3_df, dsd_order_df["partner_id"] == join3_df["id_client"]) \
     .join (dsd_region_df, dsd_order_df["region_id"] == dsd_region_df["id"])\
-    .join (join11_df, dsd_order_df["session_id"] == join11_df ["session_id"])\
+    .join (join10_df, dsd_order_df["session_id"] == join10_df ["session_id"])\
     .join (operating_unit_df, dsd_order_df["operating_unit_id"] == operating_unit_df ["id"] )\
+    .join (vendeur_df, dsd_order_df["user_id"] == vendeur_df["vendeur_id"])\
     .select(
         dsd_order_df["id"].alias("order_id"),
         dsd_order_df["name"].alias("order_ref"),
@@ -311,10 +306,13 @@ join12_df= dsd_order_df.join(join3_df, dsd_order_df["partner_id"] == join3_df["i
         join3_df["client_function"],join3_df["client_identity_document"],join3_df["client_is_blocked"],join3_df["client_is_active"],
         join3_df["is_dsd_customer"],join3_df["client_longitude"],join3_df["client_latitude"],join3_df["client_geo_point"],join3_df["client_title"],
         dsd_region_df["name"].alias("region_name"),
-        join11_df["session_name"],join11_df["session_state"],join11_df["session_start_at"],join11_df["session_stop_at"],join11_df["van_name"],join11_df["van_state"],join11_df["store_name"],
-        join11_df["store_code"],join11_df["store_street"],join11_df["store_city"],join11_df["store_company_registry"],
+        join10_df["session_name"],join10_df["session_state"],join10_df["session_start_at"],join10_df["session_stop_at"],join10_df["van_name"],join10_df["van_state"],
         operating_unit_df["is_company"].alias("ou_is_company"),
-        operating_unit_df["name"].alias("ou_name"),operating_unit_df["ou_warehouse"], operating_unit_df["ou_store"]
+        operating_unit_df["name"].alias("ou_name"),operating_unit_df["ou_warehouse"], operating_unit_df["ou_store"],
+        vendeur_df["vendeur"],
+        vendeur_df["vendeur_identity_document"],
+        vendeur_df["vendeur_is_blocked"],
+        vendeur_df["vendeur_is_active"]
            
     )
 #order_line & company & coountry & product
@@ -342,14 +340,11 @@ result_dsd_df = join13_df.join(join12_df, join13_df["order_id"] == join12_df["or
         join12_df["client_function"],join12_df["client_identity_document"],join12_df["client_is_blocked"],join12_df["client_is_active"],
         join12_df["is_dsd_customer"],join12_df["client_longitude"],join12_df["client_latitude"],join12_df["client_geo_point"],join12_df["client_title"],
         join12_df["name"].alias("region_name"),
-        join12_df["session_name"],join12_df["session_state"],join12_df["session_start_at"],join12_df["session_stop_at"],join12_df["van_name"],join12_df["van_state"],join12_df["store_name"],
-        join12_df["store_code"],join12_df["store_street"],join12_df["store_city"],join12_df["store_company_registry"],
+        join12_df["session_name"],join12_df["session_state"],join12_df["session_start_at"],join12_df["session_stop_at"],join12_df["van_name"],join12_df["van_state"],
         join12_df["ou_is_company"],
         join12_df["ou_name"],join12_df["ou_warehouse"], join12_df["ou_store"],
-        join13_df["name_product"],
-        join13_df["ordered_qty"],
-        join13_df["product_price_unit"],
-        join13_df["discount"],
+        join12_df["vendeur"],join12_df["vendeur_identity_document"],join12_df["vendeur_is_blocked"],join12_df["vendeur_is_active"],
+        join13_df["name_product"],join13_df["ordered_qty"],join13_df["product_price_unit"],join13_df["discount"],
         join13_df["company_name"],join13_df["company_code"],join13_df["company_street"],join13_df["company_city"],join13_df["company_email"],join13_df["company_registry"],
         join13_df["company_article_impo"],join13_df["company_num_id_fiscal"],join13_df["company_num_id_stat"],join13_df["company_form_juridique"],join13_df["country_state"],
         join13_df["company_country_state_code"],join13_df["country_name"],join13_df["country_code"],
@@ -367,8 +362,34 @@ result_dsd_df= result_sale_df.withColumn("type_vente", lit(type_vente_value))
 result_dsd_df.printSchema() #columns and their types 
 
 #consolider ventes et dsd 
-#schema evolution 
-loans.write.option("mergeSchema","true").format("delta").mode("append").save(DELTALAKE_SILVER_PATH)
+
+#1-voir les col en commun 
+# Obtenir les noms des colonnes de chaque DataFrame
+columns_dsd = result_dsd_df.columns
+columns_sale = result_sale_df.columns
+
+columns_communes = set(columns_dsd).intersection(columns_sale)
+
+# Afficher les colonnes communes
+print("Colonnes communes :")
+for colonne in columns_communes:
+    print(colonne)
+
+#2- union 
+# Unir les DataFrames et inclure les colonnes non communes
+data_demand_forecast = result_dsd_df.unionByName(result_sale_df)
+
+# Supprimer les doublons (si nécessaire)
+data_demand_forecast = data_demand_forecast.distinct()
+
+# Afficher le schéma du DataFrame résultant
+data_demand_forecast.printSchema()
+
+# Vérifier le nombre de lignes dans le DataFrame résultant
+print("Nombre de lignes dans le DataFrame résultant : ", data_demand_forecast.count())
+
+#schema evolution and write to a delta table 
+data_demand_forecast.write.option("mergeSchema","true").format("delta").mode("append").save("/delta/gold/data_demand_forecast")
 
 
 
