@@ -1,5 +1,6 @@
 #!/bin/bash
-sudo docker network create --driver=bridge myservice
+#sudo docker network create --driver=bridge myservice
+
 
 # the default node number is 3
 N=${1:-3}
@@ -10,13 +11,17 @@ sudo docker rm -f hadoop-master &> /dev/null
 echo "start hadoop-master container..."
 sudo docker run -itd \
                 --net=myservice \
-                -p 9870:9870 \
-                -p 8088:8088 \
-                -p 7077:7077 \
-                -p 16010:16010 \
+                -p 16011:16010 \
+                -p 9871:9870 \
+                -p 8089:8088 \
+                -p 7078:7077 \
                 --name hadoop-master \
                 --hostname hadoop-master \
                 hadoop-spark-delta:latest &> /dev/null
+
+#-v hadoop_master_data:/root/hdfs/datanode \
+#-v hadoop_master_files:/root/hdfs/namenode \
+
 
 
 # start hadoop slave container

@@ -8,7 +8,7 @@ WORKDIR /root
 
 # Update packages and install necessary tools : install openssh-server, openjdk and wget, vim, python 
 RUN apt-get update && apt-get -y upgrade && \
-    apt-get -y install  openssh-server  wget vim openjdk-8-jdk 
+    apt-get -y install  openssh-server  wget vim openjdk-8-jdk    
    
     
 ENV SPARK_VERSION 3.3.2
@@ -37,10 +37,10 @@ ENV LD_LIBRARY_PATH=/usr/local/hadoop/lib/native:$LD_LIBRARY_PATH
 
 
 # install spark 3.3.2
-RUN wget https://dlcdn.apache.org/spark/spark-3.3.2/spark-3.3.2-bin-hadoop3.tgz && \
-    tar -xvf spark-3.3.2-bin-hadoop3.tgz && \
-    mv spark-3.3.2-bin-hadoop3 /usr/local/spark && \
-    rm spark-3.3.2-bin-hadoop3.tgz
+RUN wget https://dlcdn.apache.org/spark/spark-3.2.4/spark-3.2.4-bin-hadoop3.2.tgz && \
+    tar -xvf spark-3.2.4-bin-hadoop3.2.tgz && \
+    mv spark-3.2.4-bin-hadoop3.2 /usr/local/spark && \
+    rm spark-3.2.4-bin-hadoop3.2.tgz
 
 
 # environment variables for sprak 

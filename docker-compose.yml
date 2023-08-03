@@ -5,11 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile
     image: hadoop-spark-delta:latest
-    volumes:
-      - hdfs_data:/root/hdfs/datanode
-      - namenode_files:/root/hdfs/namenode
-      - data:/root/data
-  
+   
 
    # configuration manager for NiFi
   zookeeper:
@@ -21,23 +17,25 @@ services:
             - ALLOW_ANONYMOUS_LOGIN=yes
         networks:
             - nifi-network
+            
 
   # data extraction, transformation and load service
   nifi:
+    container_name: nifi
     image: apache/nifi:latest
     ports:
       - 9999 # Unsecured HTTP Web Port
     environment:
     #Nifi web UI credentials 
-      #- SINGLE_USER_CREDENTIALS_USERNAME=admin
-      #- SINGLE_USER_CREDENTIALS_PASSWORD=adminHANAWWWFFF
+      - SINGLE_USER_CREDENTIALS_USERNAME=admin
+      - SINGLE_USER_CREDENTIALS_PASSWORD=adminHANAWWWFFF
       - NIFI_WEB_HTTP_PORT=9999
-      - NIFI_ZK_CONNECT_STRING=zookeeper:2181
+      #- NIFI_ZK_CONNECT_STRING=
       - NIFI_SENSITIVE_PROPS_KEY=l5bGW7Miy5Vv5sGTr8tXqLyVfpOdTnY0
-      - NIFI_ELECTION_MAX_WAIT=1 mins
-      - NIFI_CLUSTER_PROTOCOL_HEARTBEAT_INTERVAL=5 sec
-      - NIFI_CLUSTER_IS_NODE=true
-      - NIFI_CLUSTER_NODE_PROTOCOL_PORT=8082
+      #- NIFI_ELECTION_MAX_WAIT=1 mins
+      #- NIFI_CLUSTER_PROTOCOL_HEARTBEAT_INTERVAL=5 sec
+      #- NIFI_CLUSTER_IS_NODE=true
+      #- NIFI_CLUSTER_NODE_PROTOCOL_PORT=8082
     networks:
             - nifi-network
     volumes:
@@ -80,6 +78,9 @@ services:
             PGDATA: /data/postgres
         volumes:
             - postgres_data:/data/postgres
+            - ./config/postgresql.conf:/var/lib/postgresql/data/postgresql.conf
+             #volume for postgres extensions (postgis)
+            - postgres_extensions:/usr/share/postgresql/15/extension
         ports:
             - "5432:5432"
         networks:
@@ -160,6 +161,7 @@ volumes:
   nifi-jdbc:
   nifi-credentials:
   postgres_data:
+  postgres_extensions:
   pgadmin_data:
   shared-workspace:
   namenode_files:

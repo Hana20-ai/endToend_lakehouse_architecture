@@ -42,8 +42,10 @@ for f in $HADOOP_HOME/contrib/capacity-scheduler/*.jar; do
 done
 
 # The maximum amount of heap to use, in MB. Default is 1000.
-#export HADOOP_HEAPSIZE=
+#export HADOOP_HEAPSIZE=4096
 #export HADOOP_NAMENODE_INIT_HEAPSIZE=""
+
+
 
 # Extra Java runtime options.  Empty by default.
 export HADOOP_OPTS="$HADOOP_OPTS -Djava.net.preferIPv4Stack=true"
@@ -56,6 +58,16 @@ export HADOOP_SECONDARYNAMENODE_OPTS="-Dhadoop.security.logger=${HADOOP_SECURITY
 
 export HADOOP_NFS3_OPTS="$HADOOP_NFS3_OPTS"
 export HADOOP_PORTMAP_OPTS="-Xmx512m $HADOOP_PORTMAP_OPTS"
+
+#export HADOOP_NAMENODE_OPTS="-Xms3g -Xmx8g -XX:+UseG1GC"
+#export HADOOP_DATANODE_OPTS="-Xms3g -Xmx8g -XX:+UseG1GC"
+
+#using different garbage collectors 
+#export HADOOP_OPTS="$HADOOP_OPTS -XX:+UseG1GC"
+#export HADOOP_OPTS="$HADOOP_OPTS -XX:+UseConcMarkSweepGC"
+
+#export HADOOP_NAMENODE_OPTS="-Dcom.sun.management.jmxremote -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=8 -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=70 -Xms2G -Xmx2G -XX:NewSize=128M -XX:MaxNewSize=128M -XX:PermSize=128M -XX:MaxPermSize=256M -verbose:gc -Xloggc:/usr/hadoop/local/gc.log-`date +'%Y%m%d%H%M'` -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps -XX:ErrorFile=/usr/local/hadoop/hs_err_pid%p.log -XX:+HeapDumpOnOutOfMemoryError $HADOOP_NAMENODE_OPTS"
+
 
 # The following applies to multiple commands (fs, dfs, fsck, distcp etc)
 export HADOOP_CLIENT_OPTS="-Xmx512m $HADOOP_CLIENT_OPTS"
@@ -102,3 +114,6 @@ export HADOOP_SECURE_DN_PID_DIR=${HADOOP_PID_DIR}
 
 # A string representing this instance of hadoop. $USER by default.
 export HADOOP_IDENT_STRING=$USER
+
+
+#export HADOOP_OPTS="$HADOOP_OPTS -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:/usr/local/hadoop/gc2.log"

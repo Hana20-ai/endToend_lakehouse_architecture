@@ -20,10 +20,12 @@ done
 
 echo ""
 
-echo -e "\nbuild docker hadoop-spark-delta image\n"
+echo -e "\nbuilding the cluster...\n"
 
 # rebuild the image
 #sudo docker build -t kiwenlau/hadoop:1.0 .
-sudo docker-compose up --build
+#sudo docker-compose up --build
 
 echo ""
+
+./start-container.sh
