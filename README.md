@@ -12,7 +12,7 @@ Follow these steps to get the cluster up and running:
 
 ```bash
 cd endToend_lakehouse_deltalake
-sudo docker compose up
+sudo docker compose up 
 ### 2. Start the Hadoop cluster
 sudo ./start-container.sh 
 ### 3. Test the cluster with Spark and Delta Lake
